@@ -23,30 +23,62 @@
   </head>
 <body>
 
-
 <div ng-app="App">
-    <div ng-controller="AppCtrl" layout="column" style="height: 800px;" ng-cloak>
-        <section layout="row" flex>
-          <md-sidenav class="md-sidenav-left" md-component-id="left"
-                      md-disable-backdrop md-whiteframe="4">
+    <div ng-controller="AppCtrl" layout="column" style="height: 100%" ng-cloak>
+      <md-content flex layout-padding>
+        <div layout="column" layout-align="top center">
+          <p>
+            Welcome to my FarmDog exercise</br>
+            Click the button to open the panel lists countries and their capitals, that are in the continent selected in the dropdown.
+          </p>
 
-            <md-toolbar class="md-theme-indigo">
-              <h1 class="md-toolbar-tools">Weather Panel</h1>
+          <div>
+            <md-button class="md-raised md-primary" ng-click="toggleLeft()">
+              Open Panel
+            </md-button>
+          </div>
+        </div>
+      </md-content>
+
+
+        <section layout="row" flex>
+          <md-sidenav class="md-sidenav-left" md-component-id="left">
+
+            <md-toolbar class="md-theme-indigo" layout-align="start end">
+              <md-button class="md-fab md-mini md-primary"  ng-click="toggleLeft()" data-dismiss="modal" >X</md-button>
+              <h1 class="md-toolbar-tools">Weather in country capitals</h1>
             </md-toolbar>
 
             <md-content layout-margin>
-              <p>
-                Please select region or country
-              </p>
+              <p>  Please select region or country </p>
 
-
+              <section layout="column">
                 <select class="selectpicker" data-style="btn-primary" data-live-search="true" ng-model="selectedItem" ng-change="selectedItemChanged()">
-                  <option  ng-repeat="item in regions" value={{item.value}}>{{item.name}}</option>
+                  <option  ng-repeat="item in regions" value={{item.value}}>{{item.display}}</option>
                 </select>
 
+                <md-autocomplete  md-search-text="searchText"
+                                  md-items="item in getMatches(searchText)"
+                                  md-item-text="item.display"
+                                  md-selected-item="item.selectedItem"
+                                  md-search-text-change="selectedItemChanged()"
+                                  placeholder="Search country, city or weather"
+                                  md-autoselect="true">
+                    <md-item-template>
+
+                      <span md-highlight-text="searchText" md-highlight-flags="^i">{{item.display}}</span>
+                    </md-item-template>
+                    <md-not-found>
+                      No matches found.
+                    </md-not-found>
+                </md-autocomplete>
+              </section>
+
                 <md-content>
-                <md-list flex>
-                  <md-subheader class="md-no-sticky">list of countries</md-subheader>
+                <md-list layout="column">
+                  <md-subheader class="md-no-sticky" ng-show="countries.length>0">Results</md-subheader>
+
+                  <md-divider ></md-divider>
                   <md-list-item class="md-3-line" ng-repeat="item in countries" ng-click="null">
                     <img ng-src="http://www.geonames.org/flags/x/{{item.code}}.gif" class="md-avatar" alt="{{item.name}}" />
                     <div class="md-list-item-text" layout="column">
@@ -59,29 +91,9 @@
                 </md-list>
               </md-content>
 
-
-              <md-button ng-click="toggleLeft()" class="md-accent">
-                Close
-              </md-button>
             </md-content>
           </md-sidenav>
-          <md-content flex layout-padding>
-            <div layout="column" layout-align="top center">
-              <p>
-                Welcome to my FarmDog exercise</br>
-                The panel lists countries and their capitals, that are in the continent selected in the dropdown.
-              </p>
 
-              <div>
-                <md-button ng-click="toggleLeft()" class="md-raised">
-                  Open Panel
-                </md-button>
-              </div>
-            </div>
-
-
-
-          </md-content>
         </section>
     </div>
 </div>
