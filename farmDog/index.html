@@ -1,0 +1,95 @@
+<html>
+  <head>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="node_modules/angular/angular.min.js"></script>
+
+    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="node_modules/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
+
+    <script src="node_modules/angular-animate/angular-animate.min.js"></script>
+    <script src="node_modules/angular-aria/angular-aria.min.js"></script>
+    <script src="node_modules/angular-material/angular-material.min.js"></script>
+
+
+    <script src="js/app.js"></script>
+
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700' rel='stylesheet' type='text/css'>
+    <link href='stylesheet.css' rel='stylesheet' type='text/css'>
+    <link href='node_modules/bootstrap/dist/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+    <link href='node_modules/bootstrap-select/dist/css/bootstrap-select.min.css' rel='stylesheet' type='text/css'>
+    <link href='node_modules/angular-material/angular-material.min.css' rel='stylesheet' type='text/css'>
+
+    <title>Farm-dog exercise</title>
+  </head>
+<body>
+
+
+<div ng-app="App">
+    <div ng-controller="AppCtrl" layout="column" style="height: 800px;" ng-cloak>
+        <section layout="row" flex>
+          <md-sidenav class="md-sidenav-left" md-component-id="left"
+                      md-disable-backdrop md-whiteframe="4">
+
+            <md-toolbar class="md-theme-indigo">
+              <h1 class="md-toolbar-tools">Weather Panel</h1>
+            </md-toolbar>
+
+            <md-content layout-margin>
+              <p>
+                Please select region or country
+              </p>
+
+
+                <select class="selectpicker" data-style="btn-primary" data-live-search="true" ng-model="selectedItem" ng-change="selectedItemChanged()">
+                  <option  ng-repeat="item in regions" value={{item.value}}>{{item.name}}</option>
+                </select>
+
+                <md-content>
+                <md-list flex>
+                  <md-subheader class="md-no-sticky">list of countries</md-subheader>
+                  <md-list-item class="md-3-line" ng-repeat="item in countries" ng-click="null">
+                    <img ng-src="http://www.geonames.org/flags/x/{{item.code}}.gif" class="md-avatar" alt="{{item.name}}" />
+                    <div class="md-list-item-text" layout="column">
+                      <h3>{{ item.name }}</h3>
+                      <h4>{{ item.capital }}</h4>
+                      <p>{{ weathers[item.capital] }}</p>
+                    </div>
+                    <md-divider ></md-divider>
+                  </md-list-item>
+                </md-list>
+              </md-content>
+
+
+              <md-button ng-click="toggleLeft()" class="md-accent">
+                Close
+              </md-button>
+            </md-content>
+          </md-sidenav>
+          <md-content flex layout-padding>
+            <div layout="column" layout-align="top center">
+              <p>
+                Welcome to my FarmDog exercise</br>
+                The panel lists countries and their capitals, that are in the continent selected in the dropdown.
+              </p>
+
+              <div>
+                <md-button ng-click="toggleLeft()" class="md-raised">
+                  Open Panel
+                </md-button>
+              </div>
+            </div>
+
+
+
+          </md-content>
+        </section>
+    </div>
+</div>
+
+
+
+
+
+
+  </body>
+</html>
