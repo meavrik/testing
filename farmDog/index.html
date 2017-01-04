@@ -27,19 +27,18 @@
     <div ng-controller="AppCtrl" layout="column" style="height: 100%" ng-cloak>
       <md-content flex layout-padding>
         <div layout="column" layout-align="top center">
-          <p>
+          <p id="welcome">
             Welcome to my FarmDog exercise</br>
-            Click the button to open the panel lists countries and their capitals, that are in the continent selected in the dropdown.
+            Click the button to open the panel lists countries and their capitals</br>
+            (you can select and change continent from the dropdown)
           </p>
 
-          <div>
-            <md-button class="md-raised md-primary" ng-click="toggleLeft()">
-              Open Panel
-            </md-button>
-          </div>
+          <md-button class="md-raised md-primary" ng-click="toggleLeft()">
+            Open Panel
+          </md-button>
+
         </div>
       </md-content>
-
 
         <section layout="row" flex>
           <md-sidenav class="md-sidenav-left" md-component-id="left">
@@ -61,7 +60,8 @@
                                   md-items="item in getMatches(searchText)"
                                   md-item-text="item.display"
                                   md-selected-item="item.selectedItem"
-                                  md-search-text-change="selectedItemChanged()"
+                                  md-search-text-change="searchItemChanged(item.searchText)"
+                                  md-selected-item-change="selectedSearchItemChange(item)"
                                   placeholder="Search country, city or weather"
                                   md-autoselect="true">
                     <md-item-template>
@@ -79,12 +79,12 @@
                   <md-subheader class="md-no-sticky" ng-show="countries.length>0">Results</md-subheader>
 
                   <md-divider ></md-divider>
-                  <md-list-item class="md-3-line" ng-repeat="item in countries" ng-click="null">
+                  <md-list-item class="md-3-line" ng-repeat="item in resultListArr" ng-click="null">
                     <img ng-src="http://www.geonames.org/flags/x/{{item.code}}.gif" class="md-avatar" alt="{{item.name}}" />
                     <div class="md-list-item-text" layout="column">
                       <h3>{{ item.name }}</h3>
                       <h4>{{ item.capital }}</h4>
-                      <p>{{ weathers[item.capital] }}</p>
+                      <p>{{ item.weather }}</p>
                     </div>
                     <md-divider ></md-divider>
                   </md-list-item>
@@ -96,12 +96,7 @@
 
         </section>
     </div>
-</div>
-
-
-
-
-
+  </div>
 
   </body>
 </html>

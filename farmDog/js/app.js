@@ -1,47 +1,59 @@
 var app = angular.module('App', ['ngMaterial']);
 
-app.controller('AppCtrl', function ($scope, $http,$timeout, $mdSidenav) {
+app.controller('AppCtrl', function ($scope, $http,$mdSidenav) {
 
   $scope.toggleLeft = buildToggler('left');
   $scope.toggleRight = buildToggler('right');
 
   $scope.regions = [
-    {display:"All" ,value:"all"},
-    {display:"Africa" ,value:"africa"},
     {display:"Americas" ,value:"americas"},
+    {display:"Africa" ,value:"africa"},
     {display:"Asia" ,value:"asia"},
-    {display:"Europe" ,value:"europe"}
+    {display:"Europe" ,value:"europe"},
+    {display:"All" ,value:"all"}
   ]
 
-  let regionValues = [];
-  let _currentRegion;
-  for (var region in $scope.regions) {
-    regionValues.push(region.value);
+  let _searchArr=[],
+      _currentRegion=$scope.regions[0].value,
+      _countries;
+
+  $scope.selectedItem= _currentRegion;
+  $scope.searchItemChanged = function(text){
+    console.log("searchItemChanged "+text);
+    if (!text)
+    {
+      $scope.resultListArr=_countries;
+    }
   }
 
   $scope.selectedItemChanged = function(){
-
-    if (regionValues.indexOf($scope.selectedItem) && _currentRegion!=$scope.selectedItem)
+    if (_currentRegion!=$scope.selectedItem)
     {
         console.log("selectedItemChanged "+$scope.selectedItem);
-        getCountriesBy($scope.selectedItem);
+        getCountriesIn($scope.selectedItem);
     }
    }
 
-  $scope.selectedItem= "americas";
-  getCountriesBy("americas");
-
   $scope.getMatches = function (text) {
-      var results = text ? $scope.regions.filter( createFilterFor(text) ) : $scope.regions,
-          deferred;
+      let results = text ? _searchArr.filter( createFilterFor(text) ) : _searchArr;
 
-      if (self.simulateQuery) {
-        deferred = $q.defer();
-        $timeout(function () { deferred.resolve( results ); }, Math.random() * 1000, false);
-        return deferred.promise;
-      } else {
-        return results;
+      let newArr = [];
+      let check = [];
+      let newResults = [];
+      for (countryItem of results) {
+        if (countryItem.hasOwnProperty("source")) {
+            newArr.push(countryItem.source);
+        }
+
+        if (check.indexOf(countryItem.display)===-1)
+        {
+            check.push(countryItem.display);
+            newResults.push(countryItem);
+        }
       }
+
+      $scope.resultListArr=newArr;
+      return newResults;
     }
 
     function createFilterFor(query) {
@@ -58,28 +70,80 @@ app.controller('AppCtrl', function ($scope, $http,$timeout, $mdSidenav) {
     }
   }
 
- function getCountriesBy(searchBy)
+ function getCountriesIn(region)
  {
-   _currentRegion = searchBy;
-   let url = searchBy=="all"?"https://restcountries.eu/rest/v1/all":`https://restcountries.eu/rest/v1/region/${searchBy}`;
+   _currentRegion = region;
+   let url = region=="all"?"https://restcountries.eu/rest/v1/all":`https://restcountries.eu/rest/v1/region/${region}`;
    $http.get(url)
        .then(function(response) {
-          $scope.weathers=[];
-           $scope.countries = response.data;
-           let item;
-           for (var i = 0; i < $scope.countries.length; i++) {
+          _searchArr =[];
+          _countries = response.data;
+          $scope.resultListArr=[];
 
-             item=$scope.countries[i];
-             item.code = item.topLevelDomain[0].substring(1);
+          for (countryItem of _countries) {
 
-             $http.get(`http://api.openweathermap.org/data/2.5/weather?q=${item.capital}&appid=3e76134065cc713f10e963f409875381`)
-                 .then(function(response) {
-                    $scope.weathers[response.data.name] = response.data.weather[0].description
-                 })
+             countryItem.code = countryItem.topLevelDomain[0].substring(1);
+
+             addToResultListArr(countryItem);
+             addToSearchArr(countryItem,"name");
+
+             if (countryItem.capital)
+             {
+               addToSearchArr(countryItem,"capital");
+               getWeatherByCity(countryItem.capital);
+             }
            }
 
        }, function errorCallback(response) {
           console.log(response)
     })
  }
+
+ function getWeatherByCity(name)
+ {
+   $http.get(`http://api.openweathermap.org/data/2.5/weather?q=${name}&appid=3e76134065cc713f10e963f409875381`)
+     .then(function(response) {
+        if (response && response.data && response.data.weather && response.data.weather.length>0)
+        {
+          let countryItem = getCountryItemByCapitel(response.data.name);
+          if (countryItem) {
+            countryItem.weather=response.data.weather[0].description;
+            addToSearchArr(countryItem,"weather");
+          }
+        } else
+        {
+          console.log(`no weather data for ${response}`);
+        }
+     }, function errorCallback(response) {
+        console.log(`can't find whether data ${response}`);
+    })
+}
+
+ function getCountryItemByCapitel(capitalName)
+ {
+     for (countryItem of _countries) {
+       if (countryItem.capital === capitalName) return countryItem;
+     }
+     return null;
+ }
+
+ function addToResultListArr(countryItem) {
+   if (!countryItem) return;
+    countryItem.display=countryItem.name;
+    countryItem.value=angular.lowercase(countryItem.name);
+    $scope.resultListArr.push(countryItem);
+ }
+
+ function addToSearchArr(countryItem,filterBy) {
+
+   if (!countryItem) return;
+
+   if (countryItem.hasOwnProperty(filterBy))
+   {
+      var obj = {display:countryItem[filterBy],value:angular.lowercase(countryItem[filterBy]),source:countryItem };
+      _searchArr.push(obj);
+    }
+ }
+
+ getCountriesIn(_currentRegion);
 });
