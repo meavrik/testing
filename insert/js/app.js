@@ -1,85 +1,75 @@
 var app = angular.module('App', ['ngMaterial']);
 
-app.controller('AppCtrl', function ($scope) {
+app.controller('AppCtrl', function ($scope,$http) {
+  const DEBUG_MODE = true;
   const MAX_VALUE = 1000000000;
-  const MIN_VALUE = 0
-  const onesArr =["","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
-  const dozens=["","ten","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+  const MIN_VALUE = 0;
+  const onesArr = ["","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+  const dozens = ["","ten","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
 
+  // on every change to the textfield string number we test the string result
   $scope.onChangeInputText = function(value){
+      /*if not a number, or not between the define bounds we return the remark
+      if is valid we try to translate the number to words
+      */
       if (isNaN(value) || value<MIN_VALUE || value>MAX_VALUE)
       {
           $scope.resultText = "Please enter a number, that is bigger then 0 and smaller than 1,000,000,000.";
       }
       else
       {
-          $scope.resultText = translateNumber(value);
+          $scope.resultText = numberToWords(value);
       }
     }
 
-    function translateNumber(value)
+    //translate number to words
+    function numberToWords(value)
     {
         if (!value || isNaN(value)) return "";
-        let newstr="";
+        let numberInWordsStr="";
         if (value && value.length)
         {
-          let tempStr=value.split("").reverse().join('');
+          let digitsGroupArr = [
+                                {arr:[],showStr:"billion"},
+                                {arr:[],showStr:"million"},
+                                {arr:[],showStr:"thousand"},
+                                {arr:[],showStr:""},
+                              ];
+          //we take the number and split it into parts of 3 digits, each in a group accordingly
+          let numberAsString=value.split("").reverse().join('');
 
-          var handreds=[];
-          var thousand=[];
-          var millions=[];
-          var billions=[];
-          for (var i = 0; i < tempStr.length; i++) {
-
+          for (var i = 0; i < numberAsString.length; i++) {
+              let digit = numberAsString[i];
               if (i<3){
-                handreds.push(tempStr[i])
+                digitsGroupArr[3].arr.push(digit);
               } else
               if (i<6){
-                thousand.push(tempStr[i])
+                digitsGroupArr[2].arr.push(digit);
               } else
               if (i<9){
-                millions.push(tempStr[i])
+                digitsGroupArr[1].arr.push(digit);
               } else
               if (i<12){
-                billions.push(tempStr[i])
+                digitsGroupArr[0].arr.push(digit);
               }
           }
 
-          let numberStrArr = [
-                                {arr:billions,showStr:"billion"},
-                                {arr:millions,showStr:"million"},
-                                {arr:thousand,showStr:"thousand"},
-                                {arr:handreds,showStr:""},
-                              ];
-          /*let str;
-          if (billions.length && parseInt(billions.join(''))>0) {newstr+=getSentenceFor(billions.reverse().join('')," billion");}
-          if (millions.length && parseInt(millions.join(''))>0) {
-            str=getSentenceFor(millions.reverse().join('')," million");
-            newstr+=newstr.length?", "+str:str;
-          }
-          if (thousand.length && parseInt(thousand.join(''))>0) {
-            str=getSentenceFor(thousand.reverse().join('')," thousand");
-            newstr+=newstr.length?", "+str:str;
-          }
-          if (handreds.length && parseInt(handreds.join(''))>0)
-          {
-              str=getSentenceFor(handreds.reverse().join(''));
-              newstr+=newstr.length?", "+str:str;
-          }*/
-
-          for (obj of numberStrArr) {
-            if (obj.arr.length && parseInt(obj.arr.join(''))>0)
+          //loop through the groups and get the right sentence for each 3 digit group
+          for (item of digitsGroupArr) {
+            if (item.arr.length && parseInt(item.arr.join(''))>0)
             {
-                let str=getSentenceFor(obj.arr.reverse().join(''),obj.showStr);
-                newstr+=newstr.length?", "+str:str;
+                let str=getSentenceFor(item.arr.reverse().join(''),item.showStr);
+                if (str)
+                {
+                  //if we get a sentence, add it to the full sentence string
+                  numberInWordsStr+=numberInWordsStr.length?", "+str:str;
+                }
             }
           }
         }
 
-        return newstr;
+        return numberInWordsStr;
       }
-
-
 
       function getSentenceFor(value,add="")
       {
@@ -87,42 +77,47 @@ app.controller('AppCtrl', function ($scope) {
         if (parseInt(value)==0) return "";
         if (value.length)
         {
-          /*let firstStr = value.toString().substring(value.length-2,value.length);
+          // function for getting the dozens words
+          let calcDozens = (num) => {
+            if (num==0) return "";
+            if (num<20) return onesArr[num];
+            let firstNumWord = dozens[num.toString()[0]];
+            let secondNumWord = onesArr[num.toString()[1]];
 
-          if (value.length>2 && value.toString()[0]!=0)
-          {
-              wordNum+=onesArr[parseInt(value.toString()[0])]+" handred ";
+            return secondNumWord?`${firstNumWord}-${secondNumWord}`:firstNumWord;
           }
 
-          let valArr=firstStr.split("").join("");
-          if (parseInt(value)<20)
-          {
-              wordNum+=onesArr[parseInt(valArr)];
-          } else {
-
-              wordNum += dozens[valArr[1]]+" "+onesArr[valArr[0]];
-          }
-
-          return wordNum?wordNum+" "+add:"";*/
-
-          var a = (num) => {return num<20?onesArr[num]:dozens[num.toString()[0]]+" "+onesArr[num.toString()[1]]};
           if (value.length<3)
           {
-              //let num =parseInt(value);
-              //wordNum+=num<20?onesArr[num]:dozens[num[0]]+" "+onesArr[num[1]];
-              wordNum+=a(parseInt(value));
+              // handle dozens
+              wordNum+=calcDozens(parseInt(value));
           } else {
-              //value=value.join("").shift();
-              wordNum+=onesArr[value[0]]+" handred ";
-              wordNum+=a(parseInt(value.join("").shift()));
+              // handle hundreds + dozens
+              let arr = value.split("");
+              let hundredNumWord = onesArr[arr[0]]
+              if (hundredNumWord) wordNum+=hundredNumWord+" hundred";
+              //remove the hundred digit (we used)
+              arr.shift();
+              if (arr.length>1)
+              {
+                  let dozens = calcDozens(parseInt(arr.join('')));
+                  if (dozens)
+                  {
+                      wordNum+=hundredNumWord?", "+dozens:dozens;
+                  }
+              }
           }
 
-          return wordNum?wordNum+" "+add:"";
+          if (add) wordNum+=` ${add}`;
         }
+        return wordNum
       }
 
-      //unit test
-    function testAll()
+
+
+
+    //unit test for varius types of numbers
+    function runSomeTests()
     {
       const tests = [   {value:"dasd",result:""},
                   {value:"10d",result:""},
@@ -135,36 +130,46 @@ app.controller('AppCtrl', function ($scope) {
                   {value:"20",result:"twenty"},
                   {value:"24",result:"twenty-four"},
                   {value:"79",result:"seventy-nine"},
-                  {value:"101",result:"one hundred one"},
-                  {value:"305",result:"three hundred five"},
-                  {value:"777",result:"seven hundred seventy-seven"},
+                  {value:"100",result:"one hundred"},
+                  {value:"101",result:"one hundred, one"},
+                  {value:"305",result:"three hundred, five"},
+                  {value:"777",result:"seven hundred, seventy-seven"},
                   {value:"1000",result:"one thousand"},
                   {value:"1002",result:"one thousand, two"},
                   {value:"1055",result:"one thousand, fifty-five"},
-                  {value:"1114",result:"one thousand, one hundred fourteen"},
-                  {value:"9999",result:"nine thousand, nine hundred ninety-nine"},
+                  {value:"1114",result:"one thousand, one hundred, fourteen"},
+                  {value:"9999",result:"nine thousand, nine hundred, ninety-nine"},
                   {value:"10000",result:"ten thousand"},
                   {value:"10003",result:"ten thousand, three"},
                   {value:"20073",result:"twenty thousand, seventy-three"},
                   {value:"41003",result:"forty-one thousand, three"},
-                  {value:"108003",result:"one hundred eight thousand, three"},
-                  {value:"550003",result:"five hundred fifty thousand, three"},
-                  {value:"990012",result:"nine hundred ninety thousand, twelve"},
+                  {value:"108003",result:"one hundred, eight thousand, three"},
+                  {value:"550003",result:"five hundred, fifty thousand, three"},
+                  {value:"990012",result:"nine hundred, ninety thousand, twelve"},
+                  {value:"1000000",result:"one million"},
                   {value:"1000003",result:"one million, three"},
+                  {value:"3003000",result:"three million, three thousand"},
                   {value:"7200013",result:"seven million, two hundred thousand, thirteen"},
-                  {value:"9999999",result:"nine million, nine hundred ninety-nine thousand, nine hundred ninety-nine"},
+                  {value:"9999999",result:"nine million, nine hundred, ninety-nine thousand, nine hundred, ninety-nine"},
                   {value:"10000003",result:"ten million, three"},
                   {value:"90001003",result:"ninety million, one thousand, three"},
                   {value:"1000000000",result:"one billion"}
                 ];
 
+        let totalSuccess=0;
+
         for (testItem of tests) {
-             let result = translateNumber(testItem.value);
-             let success = result == testItem.result?true:false;
-             let resultStr = success?" PASS!":" FAIL!"
-             console.log(`test ${testItem.value} ${resultStr}  got ${result} need to ${testItem.result}`);
+             let result = numberToWords(testItem.value);
+             if (result == testItem.result) {
+                totalSuccess++;
+                console.debug(`PASS! ${testItem.value} : [${result}] = [${testItem.result}]`);
+             } else {
+                console.warn(`FAIL! ${testItem.value} : [${result}] = [${testItem.result}]`);
+             }
          }
+         console.log(`total success : ${totalSuccess} / ${tests.length}`);
      }
-     testAll();
+
+     if (DEBUG_MODE===true) runSomeTests();
 
 });
